@@ -1,8 +1,9 @@
 from functools import total_ordering
 
-
+# Класс студент
 @total_ordering
 class Student:
+    # Инициализация
     def __init__(self, name, surname, gender):
         self.name = name
         self.surname = surname
@@ -12,16 +13,15 @@ class Student:
         self.grades = {}
         self.sr_rate = None
 
+    # Выставление оценки лектору за лекцию по курсу
     def rate_hw(self, lecturer, course, grade):
         if isinstance(lecturer, Lecturer) and course in self.courses_in_progress and course in lecturer.courses_attached:
-            if course in lecturer.grades:
-                lecturer.grades[course] += [grade]
-            else:
-                lecturer.grades[course] = [grade]
+            lecturer.grades.setdefault(course, []).append(grade)
         else:
             return 'Ошибка'
 
-    def calc_sr_rate(self):
+    # Расчёт средней оценки по всем предметам
+    def calc_avr_rate(self):
         s, c = 0, 0
         for v in self.grades.values():
             s += sum(v)
@@ -29,8 +29,9 @@ class Student:
         self.sr_rate = s / c if c > 0 else None
         return self.sr_rate
 
+    # Вывод информации о студенте в читабельном виде
     def __str__(self):
-        self.calc_sr_rate()
+        self.calc_avr_rate()
         return(f'Имя: {self.name}\n'
                f'Фамилия: {self.surname}\n'
                f'Средняя оценка за домашние задания: {self.sr_rate}\n'
@@ -38,14 +39,21 @@ class Student:
                f'Завершенные курсы: {", ".join(self.finished_courses)}')
 
 
+    # Сравнение студента с другими классами, имеющими аналогичную функцию подсчёта среднего
+    # использование total_ordering позволяет ограничиться двумя функциями
     def __eq__(self, other):
-        return self.calc_sr_rate() == other.calc_sr_rate()
+        if hasattr(self, "calc_avr_rate") and hasattr(other, "calc_avr_rate"):
+            return self.calc_avr_rate() == other.calc_avr_rate()
+        return 'Ошибка'
 
     def __lt__(self, other):
-        return self.calc_sr_rate() < other.calc_sr_rate()
+        if hasattr(self, "calc_avr_rate") and hasattr(other, "calc_avr_rate"):
+            return self.calc_avr_rate() < other.calc_avr_rate()
+        return 'Ошибка'
 
-
+# Класс Ментор - родительский класс для лекторов и проверяющих
 class Mentor:
+    # Инициализация
     def __init__(self, name, surname):
         self.name = name
         self.surname = surname
@@ -53,9 +61,13 @@ class Mentor:
         self.grades = {}        # Оценки от студентов за преподавание
         self.sr_rate = None
 
+# Класс лектор
 @total_ordering
 class Lecturer(Mentor):
-    def calc_sr_rate(self):
+    # Для инициализации используется функция родительского класса
+
+    # Расчёт средних оценок лектора по всем курсам
+    def calc_avr_rate(self):
         s, c = 0, 0
         for v in self.grades.values():
             s += sum(v)
@@ -63,37 +75,46 @@ class Lecturer(Mentor):
         self.sr_rate = s / c if c > 0 else None
         return self.sr_rate
 
+    # Вывод информации о лекторе в читабельном виде
     def __str__(self):
-        self.calc_sr_rate()
+        self.calc_avr_rate()
         return(f'Имя: {self.name}\n'
                f'Фамилия: {self.surname}\n'
                f'Средняя оценка за лекции: {self.sr_rate}')
 
+    # Сравнение лектора с другими классами, имеющими аналогичную функцию подсчёта среднего
+    # использование total_ordering позволяет ограничиться двумя функциями
     def __eq__(self, other):
-        return self.calc_sr_rate() == other.calc_sr_rate()
+        if hasattr(self, "calc_avr_rate") and hasattr(other, "calc_avr_rate"):
+            return self.calc_avr_rate() == other.calc_avr_rate()
+        return 'Ошибка'
 
     def __lt__(self, other):
-        return self.calc_sr_rate() < other.calc_sr_rate()
+        if hasattr(self, "calc_avr_rate") and hasattr(other, "calc_avr_rate"):
+            return self.calc_avr_rate() < other.calc_avr_rate()
+        return 'Ошибка'
 
 
+# Класс Проверяющий
 class Reviewer(Mentor):
+    # Для инициализации используется функция родительского класса
+
+    # Выставление оценок за домашнюю работу студенту по указанному курсу
     def rate_hw(self, student, course, grade):
         if isinstance(student, Student) and course in self.courses_attached and course in student.courses_in_progress:
-            if course in student.grades:
-                student.grades[course] += [grade]
-            else:
-                student.grades[course] = [grade]
+            student.grades.setdefault(course, []).append(grade)
         else:
             return 'Ошибка'
 
 
+    # Вывод информации о проверяющем в читабельном виде
     def __str__(self):
         return(f'Имя: {self.name}\n'
                f'Фамилия: {self.surname}')
 
 
-# Создание студентов и запись их на курс
-student1 = Student('Ruoy', 'Eman', 'male')
+# Создание экземпляров студентов и запись их на курс
+student1 = Student('Roy', 'Eman', 'male')
 student2 = Student('Maya', 'Bee', 'female')
 
 student1.courses_in_progress += ['Python']
@@ -105,14 +126,14 @@ student2.courses_in_progress += ['HTML']
 student1.finished_courses += ['Введение']
 student2.finished_courses += ['Организация']
 
-# Создание лекторов и добавление ответственности за курс
-lector1 = Lecturer('Dick', 'Buddy')
-lector1.courses_attached += ['Python']
-lector2 = Lecturer('Rick', 'Guffy')
-lector2.courses_attached += ['Git', 'HTML']
+# Создание экземпляров лекторов и добавление ответственности за курс
+lecturer1 = Lecturer('Dick', 'Buddy')
+lecturer1.courses_attached += ['Python']
+lecturer2 = Lecturer('Rick', 'Guffy')
+lecturer2.courses_attached += ['Git', 'HTML']
 
 
-# Создание проверяющих и добавление ответственности за курс
+# Создание экземпляров проверяющих и добавление ответственности за курс
 reviewer1 = Reviewer('Jhon', 'Week')
 reviewer1.courses_attached += ['Python', 'Git']
 reviewer2 = Reviewer('Mike', 'Tyson')
@@ -128,40 +149,71 @@ reviewer1.rate_hw(student1, 'Git', 5)
 reviewer1.rate_hw(student2, 'Python', 5)
 reviewer1.rate_hw(student2, 'Python', 5)
 reviewer2.rate_hw(student2, 'HTML', 7)
-reviewer2.rate_hw(student2, 'HTML', 7)
+print(reviewer2.rate_hw(student2, 'HTML', 7))       # Вывод None
 
-reviewer2.rate_hw(student1, 'HTML', 7)      #Проверим на ошибку
+print(reviewer2.rate_hw(student1, 'HTML', 7))       # Проверим на ошибку
 
 # Выставление оценок преподавателям
-student1.rate_hw(lector1, 'Python', 10)
-student1.rate_hw(lector1, 'Python', 5)
-student1.rate_hw(lector2, 'Git', 3)
-student1.rate_hw(lector2, 'Git', 3)
+student1.rate_hw(lecturer1, 'Python', 10)
+student1.rate_hw(lecturer1, 'Python', 5)
+student1.rate_hw(lecturer2, 'Git', 3)
+student1.rate_hw(lecturer2, 'Git', 3)
 
-student2.rate_hw(lector1, 'Python', 10)
-student2.rate_hw(lector1, 'Python', 10)
-student2.rate_hw(lector2, 'HTML', 9)
-student2.rate_hw(lector2, 'HTML', 9)
+student2.rate_hw(lecturer1, 'Python', 10)
+student2.rate_hw(lecturer1, 'Python', 10)
+student2.rate_hw(lecturer2, 'HTML', 9)
+print(student2.rate_hw(lecturer2, 'HTML', 9))       # Вывод None
 
-student1.rate_hw(lector2, 'HTML', 3)      #Проверим на ошибку
+print(student1.rate_hw(lecturer2, 'HTML', 3))       # Проверим на ошибку
 
-#  Вывод на печать информации о персонажах
-print(student1)
-print()
-print(student2)
+# Создание списков, можно было обойтись и без них, но так легче запускать проверки
+students = [student1, student2]
+lecturers = [lecturer1, lecturer2]
+reviewers = [reviewer1, reviewer2]
+
+
+print('Вывод на печать информации о персонажах')
+[print(student, '\n') for student in students]
+[print(lecturer, '\n') for lecturer in lecturers]
+[print(reviewer, '\n') for reviewer in reviewers]
+
+print('Вывод сравнений')
+print(student1 > lecturer1)
+print(lecturer2 < student1)
+print(student2 == lecturer2)
+print(lecturer2 == reviewer2)        #  Проверка ошибки
 print()
 
-print(lector1)
-print()
-print(lector2)
-print()
 
-print(reviewer1)
-print()
-print(reviewer2)
-print()
+def calc_avr_grade_stud(students, course):
+    """
+    Функция для подсчета средней оценки за домашние задания по всем студентам в рамках конкретного курса
+    :param students: список студентов
+    :param course: название курса
+    :return: средня оценка за домашние задания
+    """
+    s, c = 0, 0
+    for student in students:
+        if course in student.grades:
+            s += sum(student.grades[course])
+            c += len(student.grades[course])
+    return s / c if c > 0 else 0
 
-# Вывод сравнений
-print(student1 > lector1)
-print(student1 < student2)
-print(student2 == lector2)
+
+def calc_avr_grade_lect(lecturers, course):
+    """
+    Функция для подсчета средней оценки за лекции по всем лекторам в рамках конкретного курса
+    :param lecturers: список лекторов
+    :param course: название курса
+    :return: средня оценка за лекции
+    """
+    s, c = 0, 0
+    for lecturer in lecturers:
+        if course in lecturer.grades:
+            s += sum(lecturer.grades[course])
+            c += len(lecturer.grades[course])
+    return s / c if c > 0 else 0
+
+print('Проверка работоспособности функций')
+print(calc_avr_grade_lect(students, 'Python'))
+print(calc_avr_grade_lect(lecturers, 'Git'))
